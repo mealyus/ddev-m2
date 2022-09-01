@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+## Description: Add or Remove a CrowdSec prepend php script to nginx conf
+## Usage: crowdsec-prepend-nginx
+## <action>: add or remove (add by default)
+## Example: "ddev crowdsec-prepend-nginx"
+
+
+CURRENT_DIR=${PWD##*/}
+
+if [ "$CURRENT_DIR" != ".ddev" ];
+then
+  echo "This script must be run in a .ddev directory"
+  exit 1
+fi
+
+
+ACTION=${1:-add}
+
+
+case $ACTION in
+  add)
+    ddev exec cp /etc/nginx/sites-enabled/nginx-site.conf /etc/nginx/sites-enabled/nginx-site.conf.backup
+    docker cp custom_files/crowdsec-prepend-nginx-site.conf ddev-"${DDEV_SITENAME}"-web://etc/nginx/sites-enabled/nginx-site.conf
+    ddev exec nginx -t
+    ddev exec nginx -s reload
+    echo "Nginx config has been modified"
+    echo "To use the original conf, please run a ddev restart"
+    ;;
+  remove)
+    ddev exec cp /etc/nginx/sites-enabled/nginx-site.conf.backup /etc/nginx/sites-enabled/nginx-site.conf
+    ddev exec nginx -t
+    ddev exec nginx -s reload
+    ;;
+  *)
+    echo "Undefined action: ${ACTION}"
+    ;;
+esac
+
+
+
+
+
